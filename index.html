@@ -49,6 +49,7 @@
   --shadow:0 1px 2px rgba(0,0,0,0.35),0 10px 28px -14px rgba(0,0,0,0.6);
 }
 *{box-sizing:border-box;}
+input[type=checkbox]{ accent-color:var(--accent); }
 body{
   background:var(--bg); color:var(--text); font-family:var(--font-sans);
   padding:24px 16px 48px; margin:0;
@@ -82,6 +83,7 @@ body{
   padding:8px 10px; color:var(--text); width:100%;
 }
 .field input[type=number]:focus{ outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent); }
+.field input[type=number]:disabled{ opacity:.55; cursor:not-allowed; }
 
 .ch-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
 .ch-table th{ text-align:left; font-weight:600; color:var(--text-3); padding:0 6px 6px; font-size:11px; text-transform:uppercase; letter-spacing:.03em; }
@@ -172,6 +174,17 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
           <span class="field-label">스팀 수수료 <span class="unit">%</span></span>
           <input type="number" id="fee" step="1" min="0" max="50">
         </div>
+        <label style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="feeAuto" checked style="width:auto; margin:0;">
+          매출 구간별 자동 계산 (스팀 수수료 티어: ~$1,000만 30% / ~$5,000만 25% / 초과 20%)
+        </label>
+        <div class="field-row" id="fxRow">
+          <div class="field">
+            <span class="field-label">환율(참고용) <span class="unit">원/USD</span></span>
+            <input type="number" id="fxRate" step="10" min="500" value="1400">
+          </div>
+        </div>
+        <div class="ch-sum" id="feeAutoNote" style="text-align:left;"></div>
         <div class="field-row">
           <div class="field">
             <span class="field-label">위시리스트 확보 기간(출시 전) <span class="unit">개월</span></span>
@@ -275,7 +288,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       </div>
 
       <div class="footnote">
-        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. 이 중 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
+        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
       </div>
     </div>
   </div>
@@ -295,7 +308,32 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   };
 
   var els = {};
-  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio'].forEach(function(id){ els[id] = document.getElementById(id); });
+  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate'].forEach(function(id){ els[id] = document.getElementById(id); });
+  var feeAutoEl = document.getElementById('feeAuto');
+  var fxRowEl = document.getElementById('fxRow');
+  var feeAutoNoteEl = document.getElementById('feeAutoNote');
+
+  function syncFeeAutoUI(){
+    var on = feeAutoEl.checked;
+    els.fee.disabled = on;
+    fxRowEl.hidden = !on;
+    feeAutoNoteEl.hidden = !on;
+  }
+  feeAutoEl.addEventListener('change', function(){ syncFeeAutoUI(); update(); });
+  syncFeeAutoUI();
+
+  function fmtUsd(n){ if(!isFinite(n)) return '-'; return '$'+Math.round(n).toLocaleString('en-US'); }
+
+  function computeAutoFee(grossRevenueWon, fxRate){
+    var usd = fxRate>0 ? grossRevenueWon/fxRate : 0;
+    var tier1=10000000, tier2=50000000;
+    var r1 = Math.min(usd, tier1);
+    var r2 = Math.max(0, Math.min(usd, tier2) - tier1);
+    var r3 = Math.max(0, usd - tier2);
+    var total = r1+r2+r3;
+    var fee = total>0 ? (r1*30 + r2*25 + r3*20)/total : 30;
+    return { fee:fee, usd:usd, r1:r1, r2:r2, r3:r3 };
+  }
 
   var presetsEl = document.getElementById('presets');
   var activePreset = null;
@@ -351,11 +389,15 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var totalConv = Math.max(launchConv+0.1, parseFloat(els.totalConv.value)||launchConv+0.1);
     var price = parseFloat(els.price.value)||0;
     var unitsTarget = parseFloat(els.unitsTarget.value)||0;
+    var fxRate = Math.max(1, parseFloat(els.fxRate.value)||1400);
+    var feeAutoOn = feeAutoEl.checked;
+    var feeInfo = feeAutoOn ? computeAutoFee(price*unitsTarget, fxRate) : null;
+    var fee = feeAutoOn ? feeInfo.fee : Math.min(50, Math.max(0, parseFloat(els.fee.value)||0));
     return {
       unitsTarget: unitsTarget,
       targetRevenue: price * unitsTarget,
       price: price,
-      fee: Math.min(50, Math.max(0, parseFloat(els.fee.value)||0)),
+      fee: fee, feeAutoOn: feeAutoOn, feeInfo: feeInfo, fxRate: fxRate,
       campaignMonths: Math.max(1, Math.round(parseFloat(els.campaignMonths.value)||1)),
       targetPeriod: Math.max(1, Math.round(parseFloat(els.targetPeriod.value)||1)),
       launchConv: launchConv, totalConv: totalConv,
@@ -502,6 +544,12 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var s = readState();
     var c = calc(s);
     document.getElementById('revenuePreview').textContent = '목표 매출 = '+fmtWon(s.price)+' × '+fmtInt(s.unitsTarget)+'카피 = '+fmtEok(s.price*s.unitsTarget);
+
+    if(s.feeAutoOn){
+      els.fee.value = s.fee.toFixed(1);
+      feeAutoNoteEl.innerHTML = '총매출 약 '+fmtUsd(s.feeInfo.usd)+' &rarr; 1구간 '+fmtUsd(s.feeInfo.r1)+'(30%) + 2구간 '+fmtUsd(s.feeInfo.r2)+'(25%) + 3구간 '+fmtUsd(s.feeInfo.r3)+'(20%) &rarr; 가중평균 유효 수수료 <b style="color:var(--text)">'+s.fee.toFixed(1)+'%</b>';
+    }
+
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0);
     chSumEl.textContent = '합계 '+mixSum.toFixed(0)+'%'+(Math.abs(mixSum-100)>0.5 ? ' (100%이 아니면 비율대로 자동 정규화하여 계산)' : '');
     chSumEl.classList.toggle('off', Math.abs(mixSum-100)>0.5);
@@ -555,6 +603,8 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       els.price.value=s.price; els.fee.value=s.fee; els.campaignMonths.value=s.campaignMonths; els.targetPeriod.value=s.targetPeriod;
       els.launchConv.value=s.launchConv; els.totalConv.value=s.totalConv; els.organicRatio.value=s.organicRatio;
       els.unitsTarget.value=s.unitsTarget;
+      if(typeof s.fxRate==='number') els.fxRate.value=s.fxRate;
+      if(typeof s.feeAutoOn==='boolean'){ feeAutoEl.checked=s.feeAutoOn; syncFeeAutoUI(); }
       s.mix.forEach(function(v,i){ if(chMixInputs[i]) chMixInputs[i].value=v; });
       s.cpw.forEach(function(v,i){ if(chCpwInputs[i]) chCpwInputs[i].value=v; });
       if(saved.preset && PRESETS[saved.preset]){
