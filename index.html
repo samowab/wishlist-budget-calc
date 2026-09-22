@@ -56,8 +56,13 @@ body{
 }
 .app{ max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:20px; }
 .header{ display:flex; flex-direction:column; gap:6px; padding-block:4px; }
+.header-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .header h1{ font-size:22px; font-weight:800; margin:0; letter-spacing:-0.01em; }
 .header p{ margin:0; color:var(--text-2); font-size:13.5px; line-height:1.6; max-width:none; }
+.export-btn{ font-family:var(--font-sans); font-size:12.5px; font-weight:700; padding:9px 15px; border-radius:9px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.export-btn:hover{ opacity:.9; }
+.export-btn:active{ transform:translateY(1px); }
+.export-note{ font-size:11px; color:var(--text-3); }
 
 .layout{ display:grid; grid-template-columns:328px 1fr; gap:20px; align-items:start; }
 @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
@@ -146,7 +151,10 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
 
 <div class="app">
   <div class="header">
-    <h1>스팀 위시리스트 예산 역산기</h1>
+    <div class="header-top">
+      <h1>스팀 위시리스트 예산 역산기</h1>
+      <button type="button" class="export-btn" id="exportBtn">워드 보고서 내보내기 (.doc)</button>
+    </div>
     <p>스팀은 설치·리텐션이 아니라 <b style="color:var(--text)">위시리스트 → 출시 전환</b>이 핵심입니다. 목표 매출과 판매가를 정하면 필요 판매 카피 수 &rarr; 필요 위시리스트 수 &rarr; 필요 마케팅 예산과 채널 배분까지 거꾸로 산출합니다. 모든 수치는 입력한 가정에 기반한 추정치입니다.</p>
   </div>
 
@@ -265,6 +273,15 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
         </div>
         <div class="launch-note" id="launchNote">-</div>
         <div class="chart-wrap"><canvas id="chart"></canvas></div>
+        <details style="margin-top:14px;">
+          <summary style="cursor:pointer; font-size:12.5px; color:var(--text-2); font-weight:600;">구간별 누적 매출&middot;지출 상세 보기</summary>
+          <div style="overflow-x:auto; margin-top:10px;">
+            <table class="data" id="timelineTable">
+              <thead><tr><th style="text-align:left">구간</th><th>누적 매출</th><th>누적 지출</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
       </div>
 
       <div class="card">
@@ -519,14 +536,18 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     el.innerHTML = html;
   }
 
-  function renderSensitivity(s, base){
-    var grid = document.getElementById('sensGrid');
-    grid.innerHTML = '';
-    var items = [
+  function getSensitivityItems(s){
+    return [
       { name:'채널 CPW ±20%', calc:function(delta){ var s2=Object.assign({},s,{cpw:s.cpw.map(function(v){return v*(1+delta);})}); return calc(s2).budget; } },
       { name:'누적 총 전환율 ±5%p', calc:function(delta){ var tc=Math.max(s.launchConv+0.5,s.totalConv+delta*5); var s2=Object.assign({},s,{totalConv:tc}); return calc(s2).budget; } },
       { name:'판매가 ±15%', calc:function(delta){ var s2=Object.assign({},s,{price:s.price*(1+delta*0.75)}); return calc(s2).budget; } }
     ];
+  }
+
+  function renderSensitivity(s, base){
+    var grid = document.getElementById('sensGrid');
+    grid.innerHTML = '';
+    var items = getSensitivityItems(s);
     items.forEach(function(it){
       var low = it.calc(-1), high = it.calc(1);
       var div = document.createElement('div');
@@ -587,11 +608,134 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     document.getElementById('launchNote').innerHTML =
       '출시 시점 누적 위시리스트 <b>'+fmtInt(sim.launchPool)+'건</b> &rarr; 출시 첫 주 판매 <b>'+fmtInt(sim.unitsLaunch)+'카피</b>, 이후 '+s.targetPeriod+'개월간 추가 <b>'+fmtInt(sim.unitsTailTotal)+'카피</b> 전환';
 
+    var tlBody = document.querySelector('#timelineTable tbody');
+    tlBody.innerHTML = sim.labels.map(function(lab,i){
+      return '<tr><td>'+lab+'</td><td>'+fmtWon(sim.cumRevenue[i])+'</td><td>'+fmtWon(sim.cumSpend[i])+'</td></tr>';
+    }).join('');
+
     renderFormula(s, c);
     renderSensitivity(s, c);
 
     try{ localStorage.setItem('steam-budget-sim-state', JSON.stringify({ s:s, preset:activePreset })); }catch(e){}
   }
+
+  function buildReportHtml(s, c, sim){
+    var genreLabel = (activePreset && PRESETS[activePreset]) ? PRESETS[activePreset].label : '커스텀(직접 입력)';
+    var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
+    var now = new Date();
+    var dateStr = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
+    var pill = multiplePill(c.multiple);
+
+    var totalBudget=0, totalWishlists=0;
+    var channelRows = CHANNELS.map(function(nameHtml,i){
+      var name = nameHtml.replace(/&middot;/g,'·');
+      var share = s.mix[i]/mixSum;
+      var chBudget = c.paidWishlists*share*s.cpw[i];
+      var chWishlists = s.cpw[i]>0 ? chBudget/s.cpw[i] : 0;
+      totalBudget += chBudget; totalWishlists += chWishlists;
+      return '<tr><td>'+name+'</td><td>'+(share*100).toFixed(0)+'%</td><td>'+fmtWon(s.cpw[i])+'</td><td>'+fmtEok(chBudget)+'</td><td>'+fmtInt(chWishlists)+'건</td></tr>';
+    }).join('');
+
+    var timelineRows = sim.labels.map(function(lab,i){
+      return '<tr><td>'+lab+'</td><td>'+fmtWon(sim.cumRevenue[i])+'</td><td>'+fmtWon(sim.cumSpend[i])+'</td></tr>';
+    }).join('');
+
+    var sensRows = getSensitivityItems(s).map(function(it){
+      var low = it.calc(-1), high = it.calc(1);
+      return '<tr><td>'+it.name+'</td><td>'+fmtEok(low)+'</td><td>'+fmtEok(c.budget)+'</td><td>'+fmtEok(high)+'</td></tr>';
+    }).join('');
+
+    var feeExplain = s.feeAutoOn
+      ? ('자동 계산 (매출 구간별 가중평균, 환율 '+fmtInt(s.fxRate)+'원/USD 기준) &rarr; '+s.fee.toFixed(1)+'%')
+      : ('수동 입력 '+s.fee.toFixed(1)+'%');
+
+    return ''+
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'+
+    '<head><meta charset="utf-8"><title>스팀 위시리스트 마케팅 예산 보고서</title>'+
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'+
+    '<style>'+
+      'body{ font-family:"맑은 고딕","Malgun Gothic",sans-serif; font-size:10.5pt; color:#161a22; line-height:1.6; }'+
+      'h1{ font-size:19pt; margin-bottom:4pt; }'+
+      'h2{ font-size:13pt; margin-top:22pt; margin-bottom:8pt; border-bottom:1pt solid #444; padding-bottom:4pt; }'+
+      '.meta{ color:#666; font-size:9.5pt; margin-bottom:16pt; }'+
+      'table{ border-collapse:collapse; width:100%; margin:8pt 0 4pt; }'+
+      'th,td{ border:1pt solid #999; padding:5pt 8pt; font-size:9.5pt; text-align:right; }'+
+      'th{ background:#f0f0f0; text-align:right; }'+
+      'th:first-child, td:first-child{ text-align:left; }'+
+      '.big{ font-size:12pt; font-weight:bold; }'+
+      '.note{ color:#666; font-size:9pt; margin-top:14pt; line-height:1.7; }'+
+    '</style></head><body>'+
+      '<h1>스팀 위시리스트 마케팅 예산 보고서</h1>'+
+      '<div class="meta">생성일: '+dateStr+' &middot; 장르 프리셋: '+genreLabel+'</div>'+
+
+      '<h2>1. 입력 가정</h2>'+
+      '<table><tr><th>항목</th><th>값</th></tr>'+
+      '<tr><td>판매가</td><td>'+fmtWon(s.price)+'</td></tr>'+
+      '<tr><td>목표 판매 개수</td><td>'+fmtInt(s.unitsTarget)+'카피</td></tr>'+
+      '<tr><td>목표 매출(수수료 반영 전)</td><td>'+fmtEok(s.targetRevenue)+'</td></tr>'+
+      '<tr><td>스팀 수수료</td><td>'+feeExplain+'</td></tr>'+
+      '<tr><td>위시리스트 확보 기간(출시 전)</td><td>'+s.campaignMonths+'개월</td></tr>'+
+      '<tr><td>매출 집계 기간(출시 후)</td><td>'+s.targetPeriod+'개월</td></tr>'+
+      '<tr><td>출시 첫 주 전환율</td><td>'+s.launchConv.toFixed(1)+'%</td></tr>'+
+      '<tr><td>누적 총 전환율</td><td>'+s.totalConv.toFixed(1)+'%</td></tr>'+
+      '<tr><td>오가닉 위시리스트 비율</td><td>'+s.organicRatio.toFixed(0)+'%</td></tr>'+
+      '</table>'+
+
+      '<h2>2. 예산 계산 과정</h2>'+
+      '<table><tr><th>단계</th><th>값</th></tr>'+
+      '<tr><td>목표 판매 개수</td><td>'+fmtInt(c.unitsNeeded)+'카피</td></tr>'+
+      '<tr><td>&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</td><td>필요 위시리스트 수(전체) '+fmtInt(c.totalWishlists)+'건</td></tr>'+
+      '<tr><td>&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</td><td>필요 위시리스트 수(유상) '+fmtInt(c.paidWishlists)+'건</td></tr>'+
+      '<tr><td>&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+'</td><td class="big">필요 마케팅 예산 '+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</td></tr>'+
+      '</table>'+
+
+      '<h2>3. 핵심 지표 요약</h2>'+
+      '<table><tr><th>지표</th><th>값</th></tr>'+
+      '<tr><td>필요 마케팅 예산</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
+      '<tr><td>필요 위시리스트(유상)</td><td>'+fmtInt(c.paidWishlists)+'건 (총 '+fmtInt(c.totalWishlists)+'건 중 오가닉 '+fmtInt(c.organicWishlists)+'건)</td></tr>'+
+      '<tr><td>목표 블렌디드 CPW</td><td>'+fmtWon(c.blendedCPW)+'</td></tr>'+
+      '<tr><td>매출 배수</td><td>'+c.multiple.toFixed(2)+'x ('+pill.text+')</td></tr>'+
+      '</table>'+
+
+      '<h2>4. 채널별 예산 배분</h2>'+
+      '<table><tr><th>채널</th><th>비율</th><th>CPW</th><th>배분 예산</th><th>예상 위시리스트</th></tr>'+
+      channelRows+
+      '<tr><td><b>합계</b></td><td></td><td></td><td><b>'+fmtEok(totalBudget)+'</b></td><td><b>'+fmtInt(totalWishlists)+'건</b></td></tr>'+
+      '</table>'+
+
+      '<h2>5. 구간별 누적 매출 vs 누적 지출</h2>'+
+      '<p class="note" style="margin-top:0;">출시 시점 누적 위시리스트 '+fmtInt(sim.launchPool)+'건 &rarr; 출시 첫 주 판매 '+fmtInt(sim.unitsLaunch)+'카피, 이후 '+s.targetPeriod+'개월간 추가 '+fmtInt(sim.unitsTailTotal)+'카피 전환. 손익분기 시점: '+(sim.bepMonth!==null ? ('출시 후 약 '+sim.bepMonth+'개월차') : ('집계 기간 '+s.targetPeriod+'개월 내 미도달'))+'</p>'+
+      '<table><tr><th>구간</th><th>누적 매출</th><th>누적 지출</th></tr>'+
+      timelineRows+
+      '</table>'+
+
+      '<h2>6. 민감도 분석 (필요 예산 변화)</h2>'+
+      '<table><tr><th>변수</th><th>-쪽</th><th>기준</th><th>+쪽</th></tr>'+
+      sensRows+
+      '</table>'+
+
+      '<h2>7. 참고 사항</h2>'+
+      '<p class="note">계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 이 중 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트&middot;지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 지수적으로 추가 전환된다고 가정합니다. 전환율&middot;CPW&middot;리텐션 등은 일반적인 스팀 프리미엄 게임 마케팅 관행을 기준으로 한 예시 추정치이며, 실제 프로젝트에 적용하기 전 자체 데이터와 실제 견적으로 반드시 재검증해야 합니다.</p>'+
+    '</body></html>';
+  }
+
+  document.getElementById('exportBtn').addEventListener('click', function(){
+    var s = readState();
+    var c = calc(s);
+    var sim = simulate(s, c);
+    var html = buildReportHtml(s, c, sim);
+    var blob = new Blob(['﻿', html], { type:'application/msword' });
+    var url = URL.createObjectURL(blob);
+    var now = new Date();
+    var fname = '스팀_위시리스트_예산_보고서_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'.doc';
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
 
   [].concat(Object.values(els)).forEach(function(el){ el.addEventListener('input', update); });
 
