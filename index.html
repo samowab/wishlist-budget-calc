@@ -242,6 +242,11 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
 
       <div class="field-group">
         <div class="field-group-title">위시리스트 전환 지표</div>
+        <div class="field">
+          <span class="field-label">비위시리스트 직접구매 비율 <span class="unit">%</span></span>
+          <input type="number" id="directSaleRatio" step="1" min="0" max="90">
+        </div>
+        <div class="ch-sum" style="text-align:left;">위시리스트를 거치지 않고 스토어 알고리즘 노출·세일 중 발견·스트리밍 시청 중 즉시구매처럼 곧바로 구매되는 비중입니다. 이 비율만큼은 목표 판매 개수에서 먼저 빠지고, 나머지만 아래 위시리스트 전환 퍼널로 계산됩니다. 세일에 강한 캐주얼·인디는 20~30%, 니치·하드코어 장르는 5~15%가 대체로 현실적입니다.</div>
         <div class="field-row">
           <div class="field">
             <span class="field-label">출시 첫 주 전환율 <span class="unit">%</span></span>
@@ -340,7 +345,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       </div>
 
       <div class="footnote">
-        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
+        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 목표 판매 개수에서 비위시리스트 직접구매 비율만큼 뺀 "위시리스트 경유 판매 목표"를 누적 총 전환율로 나누면 필요 위시리스트 수가 나옵니다. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
       </div>
     </div>
   </div>
@@ -351,16 +356,16 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   var CHANNELS = ['인플루언서/스트리머 시딩','스팀 넥스트 페스트&middot;데모','소셜/디스플레이 광고','PR&middot;프레스킷/커뮤니티'];
 
   var PRESETS = {
-    casual_indie: { label:'캐주얼 인디/플랫포머', price:15000, fee:30, campaignMonths:4, targetPeriod:9, launchConv:12, totalConv:22, organicRatio:30, unitsTarget:20000, cpw:[2500,1200,4000,900], mix:[35,25,25,15] },
-    narrative: { label:'내러티브 어드벤처', price:22000, fee:30, campaignMonths:6, targetPeriod:9, launchConv:9, totalConv:17, organicRatio:35, unitsTarget:18000, cpw:[3000,1500,4500,1000], mix:[35,25,25,15] },
-    roguelike: { label:'로그라이크/액션', price:20000, fee:30, campaignMonths:6, targetPeriod:12, launchConv:13, totalConv:25, organicRatio:22, unitsTarget:35000, cpw:[3200,1400,4200,1000], mix:[35,25,25,15] },
-    strategy_sim: { label:'전략/시뮬레이션', price:32000, fee:30, campaignMonths:9, targetPeriod:12, launchConv:8, totalConv:19, organicRatio:25, unitsTarget:28000, cpw:[3500,1600,4800,1100], mix:[35,25,25,15] },
-    mmorpg: { label:'MMORPG', price:38000, fee:30, campaignMonths:9, targetPeriod:12, launchConv:10, totalConv:20, organicRatio:20, unitsTarget:40000, cpw:[4000,1800,5000,1200], mix:[35,25,25,15] },
-    arpg: { label:'ARPG(액션 RPG)', price:30000, fee:30, campaignMonths:6, targetPeriod:12, launchConv:14, totalConv:26, organicRatio:20, unitsTarget:45000, cpw:[3300,1400,4300,1000], mix:[35,25,25,15] }
+    casual_indie: { label:'캐주얼 인디/플랫포머', price:15000, fee:30, campaignMonths:4, targetPeriod:9, launchConv:12, totalConv:22, organicRatio:30, directSaleRatio:20, unitsTarget:20000, cpw:[2500,1200,4000,900], mix:[35,25,25,15] },
+    narrative: { label:'내러티브 어드벤처', price:22000, fee:30, campaignMonths:6, targetPeriod:9, launchConv:9, totalConv:17, organicRatio:35, directSaleRatio:10, unitsTarget:18000, cpw:[3000,1500,4500,1000], mix:[35,25,25,15] },
+    roguelike: { label:'로그라이크/액션', price:20000, fee:30, campaignMonths:6, targetPeriod:12, launchConv:13, totalConv:25, organicRatio:22, directSaleRatio:15, unitsTarget:35000, cpw:[3200,1400,4200,1000], mix:[35,25,25,15] },
+    strategy_sim: { label:'전략/시뮬레이션', price:32000, fee:30, campaignMonths:9, targetPeriod:12, launchConv:8, totalConv:19, organicRatio:25, directSaleRatio:8, unitsTarget:28000, cpw:[3500,1600,4800,1100], mix:[35,25,25,15] },
+    mmorpg: { label:'MMORPG', price:38000, fee:30, campaignMonths:9, targetPeriod:12, launchConv:10, totalConv:20, organicRatio:20, directSaleRatio:8, unitsTarget:40000, cpw:[4000,1800,5000,1200], mix:[35,25,25,15] },
+    arpg: { label:'ARPG(액션 RPG)', price:30000, fee:30, campaignMonths:6, targetPeriod:12, launchConv:14, totalConv:26, organicRatio:20, directSaleRatio:12, unitsTarget:45000, cpw:[3300,1400,4300,1000], mix:[35,25,25,15] }
   };
 
   var els = {};
-  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate','existingWishlists'].forEach(function(id){ els[id] = document.getElementById(id); });
+  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate','existingWishlists','directSaleRatio'].forEach(function(id){ els[id] = document.getElementById(id); });
   var feeAutoEl = document.getElementById('feeAuto');
   var fxRowEl = document.getElementById('fxRow');
   var feeAutoNoteEl = document.getElementById('feeAutoNote');
@@ -464,7 +469,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       label:name, price:s.price, fee:s.fee, feeAutoOn:s.feeAutoOn, fxRate:s.fxRate,
       campaignMonths:s.campaignMonths, targetPeriod:s.targetPeriod,
       launchConv:s.launchConv, totalConv:s.totalConv, organicRatio:s.organicRatio,
-      unitsTarget:s.unitsTarget, existingWishlists:s.existingWishlists, cpw:s.cpw.slice(), mix:s.mix.slice()
+      unitsTarget:s.unitsTarget, existingWishlists:s.existingWishlists, directSaleRatio:s.directSaleRatio, cpw:s.cpw.slice(), mix:s.mix.slice()
     };
     saveCustomPresets(customs);
     renderCustomPresetButtons();
@@ -501,6 +506,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     Array.prototype.forEach.call(presetsEl.children, function(b){ b.classList.toggle('active', b.dataset.key===key); });
     els.price.value=p.price; els.fee.value=p.fee; els.campaignMonths.value=p.campaignMonths; els.targetPeriod.value=p.targetPeriod;
     els.launchConv.value=p.launchConv; els.totalConv.value=p.totalConv; els.organicRatio.value=p.organicRatio;
+    els.directSaleRatio.value = p.directSaleRatio||0;
     els.unitsTarget.value=p.unitsTarget;
     els.existingWishlists.value = isCustom ? (p.existingWishlists||0) : 0;
     if(isCustom){
@@ -538,6 +544,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       launchConv: launchConv, totalConv: totalConv,
       organicRatio: Math.min(95, Math.max(0, parseFloat(els.organicRatio.value)||0)),
       existingWishlists: Math.max(0, parseFloat(els.existingWishlists.value)||0),
+      directSaleRatio: Math.min(90, Math.max(0, parseFloat(els.directSaleRatio.value)||0)),
       mix: mix, cpw: cpw
     };
   }
@@ -546,7 +553,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var netPrice = s.price * (1 - s.fee/100);
     var totalConvFrac = s.totalConv/100;
     var unitsNeeded = s.unitsTarget;
-    var totalWishlists = totalConvFrac>0 ? unitsNeeded/totalConvFrac : 0;
+    var unitsDirect = unitsNeeded * (s.directSaleRatio/100);
+    var unitsViaWishlist = unitsNeeded - unitsDirect;
+    var totalWishlists = totalConvFrac>0 ? unitsViaWishlist/totalConvFrac : 0;
     var existingWishlists = Math.min(s.existingWishlists, totalWishlists);
     var remainingWishlists = Math.max(0, totalWishlists - existingWishlists);
     var organicWishlists = remainingWishlists * (s.organicRatio/100);
@@ -557,7 +566,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var budget = paidWishlists * blendedCPW;
     var revenuePerWishlist = netPrice * totalConvFrac;
     var multiple = blendedCPW>0 ? revenuePerWishlist/blendedCPW : 0;
-    return { netPrice:netPrice, unitsNeeded:unitsNeeded, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple };
+    return { netPrice:netPrice, unitsNeeded:unitsNeeded, unitsDirect:unitsDirect, unitsViaWishlist:unitsViaWishlist, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple };
   }
 
   function simulate(s, c){
@@ -576,8 +585,12 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       labels.push((campaign-i)+'개월 전');
       cumRevenue.push(0); cumSpend.push(cs);
     }
+    var directLaunchShare = totalConvFrac>0 ? Math.min(1, launchConvFrac/totalConvFrac) : 0;
+    var unitsDirectLaunch = c.unitsDirect * directLaunchShare;
+    var unitsDirectRemaining = c.unitsDirect - unitsDirectLaunch;
+
     var launchPool = cw;
-    var unitsLaunch = launchPool * launchConvFrac;
+    var unitsLaunch = launchPool * launchConvFrac + unitsDirectLaunch;
     var revLaunch = unitsLaunch * c.netPrice;
     cr += revLaunch;
     labels.push('출시');
@@ -587,13 +600,16 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var poolForTail = c.totalWishlists * tailConvFrac;
     var targetTailFraction = remainingPool>0 ? Math.min(0.97, poolForTail/remainingPool) : 0;
     var q = tail>0 ? 1 - Math.pow(1-targetTailFraction, 1/tail) : 0;
+    var remainingDirectPool = unitsDirectRemaining;
 
     var unitsTailTotal = 0;
     for(var j=1;j<=tail;j++){
       var converted = remainingPool*q;
       remainingPool -= converted;
-      unitsTailTotal += converted;
-      cr += converted * c.netPrice;
+      var convertedDirect = remainingDirectPool*q;
+      remainingDirectPool -= convertedDirect;
+      unitsTailTotal += converted + convertedDirect;
+      cr += (converted + convertedDirect) * c.netPrice;
       labels.push('출시+'+j+'개월');
       cumRevenue.push(cr); cumSpend.push(cs);
     }
@@ -648,6 +664,8 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
     var html = '';
     html += '<div class="formula-step"><span class="fs-label">목표 판매 개수</span><span class="fs-value">'+fmtInt(c.unitsNeeded)+'카피</span></div>';
+    html += '<div class="formula-arrow">&minus; 비위시리스트 직접구매 '+fmtInt(c.unitsDirect)+'카피 ('+s.directSaleRatio.toFixed(0)+'%)</div>';
+    html += '<div class="formula-step"><span class="fs-label">위시리스트 경유 판매 목표</span><span class="fs-value">'+fmtInt(c.unitsViaWishlist)+'카피</span></div>';
     html += '<div class="formula-arrow">&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</div>';
     html += '<div class="formula-step"><span class="fs-label">필요 위시리스트 수 (전체)</span><span class="fs-value">'+fmtInt(c.totalWishlists)+'건</span></div>';
     html += '<div class="formula-arrow">&minus; 현재 보유 위시리스트 '+fmtInt(c.existingWishlists)+'건</div>';
@@ -804,6 +822,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<tr><td>스팀 수수료</td><td>'+feeExplain+'</td></tr>'+
       '<tr><td>위시리스트 확보 기간(출시 전)</td><td>'+s.campaignMonths+'개월</td></tr>'+
       '<tr><td>매출 집계 기간(출시 후)</td><td>'+s.targetPeriod+'개월</td></tr>'+
+      '<tr><td>비위시리스트 직접구매 비율</td><td>'+s.directSaleRatio.toFixed(0)+'%</td></tr>'+
       '<tr><td>출시 첫 주 전환율</td><td>'+s.launchConv.toFixed(1)+'%</td></tr>'+
       '<tr><td>누적 총 전환율</td><td>'+s.totalConv.toFixed(1)+'%</td></tr>'+
       '<tr><td>오가닉 위시리스트 비율</td><td>'+s.organicRatio.toFixed(0)+'%</td></tr>'+
@@ -813,6 +832,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<h2>2. 예산 계산 과정</h2>'+
       '<table><tr><th>단계</th><th>값</th></tr>'+
       '<tr><td>목표 판매 개수</td><td>'+fmtInt(c.unitsNeeded)+'카피</td></tr>'+
+      '<tr><td>&minus; 비위시리스트 직접구매 '+fmtInt(c.unitsDirect)+'카피 ('+s.directSaleRatio.toFixed(0)+'%)</td><td>위시리스트 경유 판매 목표 '+fmtInt(c.unitsViaWishlist)+'카피</td></tr>'+
       '<tr><td>&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</td><td>필요 위시리스트 수(전체) '+fmtInt(c.totalWishlists)+'건</td></tr>'+
       '<tr><td>&minus; 현재 보유 위시리스트 '+fmtInt(c.existingWishlists)+'건</td><td>남은 목표 위시리스트 '+fmtInt(c.remainingWishlists)+'건</td></tr>'+
       '<tr><td>&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</td><td>필요 위시리스트 수(유상) '+fmtInt(c.paidWishlists)+'건</td></tr>'+
@@ -845,7 +865,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '</table>'+
 
       '<h2>7. 참고 사항</h2>'+
-      '<p class="note">계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트&middot;지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 지수적으로 추가 전환된다고 가정합니다. 전환율&middot;CPW&middot;리텐션 등은 일반적인 스팀 프리미엄 게임 마케팅 관행을 기준으로 한 예시 추정치이며, 실제 프로젝트에 적용하기 전 자체 데이터와 실제 견적으로 반드시 재검증해야 합니다.</p>'+
+      '<p class="note">계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 목표 판매 개수에서 비위시리스트 직접구매 비율만큼 뺀 "위시리스트 경유 판매 목표"를 누적 총 전환율로 나누면 필요 위시리스트 수가 나옵니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트&middot;지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 지수적으로 추가 전환된다고 가정합니다. 전환율&middot;CPW&middot;리텐션 등은 일반적인 스팀 프리미엄 게임 마케팅 관행을 기준으로 한 예시 추정치이며, 실제 프로젝트에 적용하기 전 자체 데이터와 실제 견적으로 반드시 재검증해야 합니다.</p>'+
     '</body></html>';
   }
 
@@ -877,6 +897,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       els.price.value=s.price; els.fee.value=s.fee; els.campaignMonths.value=s.campaignMonths; els.targetPeriod.value=s.targetPeriod;
       els.launchConv.value=s.launchConv; els.totalConv.value=s.totalConv; els.organicRatio.value=s.organicRatio;
       els.unitsTarget.value=s.unitsTarget;
+      if(typeof s.directSaleRatio==='number') els.directSaleRatio.value=s.directSaleRatio;
       if(typeof s.existingWishlists==='number') els.existingWishlists.value=s.existingWishlists;
       if(typeof s.fxRate==='number') els.fxRate.value=s.fxRate;
       if(typeof s.feeAutoOn==='boolean'){ feeAutoEl.checked=s.feeAutoOn; syncFeeAutoUI(); }
