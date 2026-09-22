@@ -208,6 +208,11 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
         </div>
         <div class="ch-sum" id="revenuePreview" style="text-align:left;"></div>
         <div class="field">
+          <span class="field-label">현재 보유 위시리스트 수 <span class="unit">건</span></span>
+          <input type="number" id="existingWishlists" step="100" min="0" value="0">
+        </div>
+        <div class="ch-sum" style="text-align:left;">이미 쌓여있는 위시리스트는 필요 위시리스트 목표에서 먼저 차감되고, 남은 목표에 대해서만 오가닉/유상 배분을 계산합니다.</div>
+        <div class="field">
           <span class="field-label">스팀 수수료 <span class="unit">%</span></span>
           <input type="number" id="fee" step="1" min="0" max="50">
         </div>
@@ -335,7 +340,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       </div>
 
       <div class="footnote">
-        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
+        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
       </div>
     </div>
   </div>
@@ -355,7 +360,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   };
 
   var els = {};
-  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate'].forEach(function(id){ els[id] = document.getElementById(id); });
+  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate','existingWishlists'].forEach(function(id){ els[id] = document.getElementById(id); });
   var feeAutoEl = document.getElementById('feeAuto');
   var fxRowEl = document.getElementById('fxRow');
   var feeAutoNoteEl = document.getElementById('feeAutoNote');
@@ -459,7 +464,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       label:name, price:s.price, fee:s.fee, feeAutoOn:s.feeAutoOn, fxRate:s.fxRate,
       campaignMonths:s.campaignMonths, targetPeriod:s.targetPeriod,
       launchConv:s.launchConv, totalConv:s.totalConv, organicRatio:s.organicRatio,
-      unitsTarget:s.unitsTarget, cpw:s.cpw.slice(), mix:s.mix.slice()
+      unitsTarget:s.unitsTarget, existingWishlists:s.existingWishlists, cpw:s.cpw.slice(), mix:s.mix.slice()
     };
     saveCustomPresets(customs);
     renderCustomPresetButtons();
@@ -497,6 +502,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     els.price.value=p.price; els.fee.value=p.fee; els.campaignMonths.value=p.campaignMonths; els.targetPeriod.value=p.targetPeriod;
     els.launchConv.value=p.launchConv; els.totalConv.value=p.totalConv; els.organicRatio.value=p.organicRatio;
     els.unitsTarget.value=p.unitsTarget;
+    els.existingWishlists.value = isCustom ? (p.existingWishlists||0) : 0;
     if(isCustom){
       if(typeof p.fxRate==='number') els.fxRate.value=p.fxRate;
       feeAutoEl.checked = !!p.feeAutoOn;
@@ -531,6 +537,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       targetPeriod: Math.max(1, Math.round(parseFloat(els.targetPeriod.value)||1)),
       launchConv: launchConv, totalConv: totalConv,
       organicRatio: Math.min(95, Math.max(0, parseFloat(els.organicRatio.value)||0)),
+      existingWishlists: Math.max(0, parseFloat(els.existingWishlists.value)||0),
       mix: mix, cpw: cpw
     };
   }
@@ -540,15 +547,17 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var totalConvFrac = s.totalConv/100;
     var unitsNeeded = s.unitsTarget;
     var totalWishlists = totalConvFrac>0 ? unitsNeeded/totalConvFrac : 0;
-    var organicWishlists = totalWishlists * (s.organicRatio/100);
-    var paidWishlists = totalWishlists - organicWishlists;
+    var existingWishlists = Math.min(s.existingWishlists, totalWishlists);
+    var remainingWishlists = Math.max(0, totalWishlists - existingWishlists);
+    var organicWishlists = remainingWishlists * (s.organicRatio/100);
+    var paidWishlists = remainingWishlists - organicWishlists;
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
     var blendedCPW = 0;
     s.mix.forEach(function(m,i){ blendedCPW += (m/mixSum) * s.cpw[i]; });
     var budget = paidWishlists * blendedCPW;
     var revenuePerWishlist = netPrice * totalConvFrac;
     var multiple = blendedCPW>0 ? revenuePerWishlist/blendedCPW : 0;
-    return { netPrice:netPrice, unitsNeeded:unitsNeeded, totalWishlists:totalWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple };
+    return { netPrice:netPrice, unitsNeeded:unitsNeeded, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple };
   }
 
   function simulate(s, c){
@@ -562,7 +571,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var cw=0, cs=0, cr=0;
 
     for(var i=0;i<campaign;i++){
-      cw = c.totalWishlists * (i+1)/campaign;
+      cw = c.existingWishlists + c.remainingWishlists * (i+1)/campaign;
       cs = c.budget * (i+1)/campaign;
       labels.push((campaign-i)+'개월 전');
       cumRevenue.push(0); cumSpend.push(cs);
@@ -641,6 +650,8 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     html += '<div class="formula-step"><span class="fs-label">목표 판매 개수</span><span class="fs-value">'+fmtInt(c.unitsNeeded)+'카피</span></div>';
     html += '<div class="formula-arrow">&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</div>';
     html += '<div class="formula-step"><span class="fs-label">필요 위시리스트 수 (전체)</span><span class="fs-value">'+fmtInt(c.totalWishlists)+'건</span></div>';
+    html += '<div class="formula-arrow">&minus; 현재 보유 위시리스트 '+fmtInt(c.existingWishlists)+'건</div>';
+    html += '<div class="formula-step"><span class="fs-label">남은 목표 위시리스트</span><span class="fs-value">'+fmtInt(c.remainingWishlists)+'건</span></div>';
     html += '<div class="formula-arrow">&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</div>';
     html += '<div class="formula-step"><span class="fs-label">필요 위시리스트 수 (유상)</span><span class="fs-value">'+fmtInt(c.paidWishlists)+'건</span></div>';
     html += '<div class="formula-arrow">&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+' <span style="color:var(--text-3)">(채널 믹스 '+mixSum.toFixed(0)+'% 가중평균)</span></div>';
@@ -690,7 +701,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     document.getElementById('kpiBudget').textContent = fmtEok(c.budget);
     document.getElementById('kpiBudgetSub').textContent = fmtWon(c.budget);
     document.getElementById('kpiWishlists').textContent = fmtInt(c.paidWishlists)+'건';
-    document.getElementById('kpiWishlistsSub').textContent = '총 '+fmtInt(c.totalWishlists)+'건 중 오가닉 '+fmtInt(c.organicWishlists)+'건';
+    document.getElementById('kpiWishlistsSub').textContent = '전체 목표 '+fmtInt(c.totalWishlists)+'건 · 보유 '+fmtInt(c.existingWishlists)+'건 · 오가닉 '+fmtInt(c.organicWishlists)+'건 제외';
     document.getElementById('kpiCpw').textContent = fmtWon(c.blendedCPW);
     document.getElementById('kpiMultiple').textContent = (isFinite(c.multiple)? c.multiple.toFixed(2):'-')+'x';
     var pill = multiplePill(c.multiple);
@@ -796,12 +807,14 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<tr><td>출시 첫 주 전환율</td><td>'+s.launchConv.toFixed(1)+'%</td></tr>'+
       '<tr><td>누적 총 전환율</td><td>'+s.totalConv.toFixed(1)+'%</td></tr>'+
       '<tr><td>오가닉 위시리스트 비율</td><td>'+s.organicRatio.toFixed(0)+'%</td></tr>'+
+      '<tr><td>현재 보유 위시리스트 수</td><td>'+fmtInt(s.existingWishlists)+'건</td></tr>'+
       '</table>'+
 
       '<h2>2. 예산 계산 과정</h2>'+
       '<table><tr><th>단계</th><th>값</th></tr>'+
       '<tr><td>목표 판매 개수</td><td>'+fmtInt(c.unitsNeeded)+'카피</td></tr>'+
       '<tr><td>&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</td><td>필요 위시리스트 수(전체) '+fmtInt(c.totalWishlists)+'건</td></tr>'+
+      '<tr><td>&minus; 현재 보유 위시리스트 '+fmtInt(c.existingWishlists)+'건</td><td>남은 목표 위시리스트 '+fmtInt(c.remainingWishlists)+'건</td></tr>'+
       '<tr><td>&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</td><td>필요 위시리스트 수(유상) '+fmtInt(c.paidWishlists)+'건</td></tr>'+
       '<tr><td>&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+'</td><td class="big">필요 마케팅 예산 '+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</td></tr>'+
       '</table>'+
@@ -809,7 +822,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<h2>3. 핵심 지표 요약</h2>'+
       '<table><tr><th>지표</th><th>값</th></tr>'+
       '<tr><td>필요 마케팅 예산</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
-      '<tr><td>필요 위시리스트(유상)</td><td>'+fmtInt(c.paidWishlists)+'건 (총 '+fmtInt(c.totalWishlists)+'건 중 오가닉 '+fmtInt(c.organicWishlists)+'건)</td></tr>'+
+      '<tr><td>필요 위시리스트(유상)</td><td>'+fmtInt(c.paidWishlists)+'건 (전체 목표 '+fmtInt(c.totalWishlists)+'건 &minus; 보유 '+fmtInt(c.existingWishlists)+'건 &minus; 오가닉 '+fmtInt(c.organicWishlists)+'건)</td></tr>'+
       '<tr><td>목표 블렌디드 CPW</td><td>'+fmtWon(c.blendedCPW)+'</td></tr>'+
       '<tr><td>매출 배수</td><td>'+c.multiple.toFixed(2)+'x ('+pill.text+')</td></tr>'+
       '</table>'+
@@ -832,7 +845,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '</table>'+
 
       '<h2>7. 참고 사항</h2>'+
-      '<p class="note">계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 이 중 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트&middot;지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 지수적으로 추가 전환된다고 가정합니다. 전환율&middot;CPW&middot;리텐션 등은 일반적인 스팀 프리미엄 게임 마케팅 관행을 기준으로 한 예시 추정치이며, 실제 프로젝트에 적용하기 전 자체 데이터와 실제 견적으로 반드시 재검증해야 합니다.</p>'+
+      '<p class="note">계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 필요 위시리스트 수 = 목표 판매 개수 &divide; 누적 총 전환율. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트&middot;지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 지수적으로 추가 전환된다고 가정합니다. 전환율&middot;CPW&middot;리텐션 등은 일반적인 스팀 프리미엄 게임 마케팅 관행을 기준으로 한 예시 추정치이며, 실제 프로젝트에 적용하기 전 자체 데이터와 실제 견적으로 반드시 재검증해야 합니다.</p>'+
     '</body></html>';
   }
 
@@ -864,6 +877,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       els.price.value=s.price; els.fee.value=s.fee; els.campaignMonths.value=s.campaignMonths; els.targetPeriod.value=s.targetPeriod;
       els.launchConv.value=s.launchConv; els.totalConv.value=s.totalConv; els.organicRatio.value=s.organicRatio;
       els.unitsTarget.value=s.unitsTarget;
+      if(typeof s.existingWishlists==='number') els.existingWishlists.value=s.existingWishlists;
       if(typeof s.fxRate==='number') els.fxRate.value=s.fxRate;
       if(typeof s.feeAutoOn==='boolean'){ feeAutoEl.checked=s.feeAutoOn; syncFeeAutoUI(); }
       s.mix.forEach(function(v,i){ if(chMixInputs[i]) chMixInputs[i].value=v; });
