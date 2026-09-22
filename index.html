@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>스팀 위시리스트 예산 역산기</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
@@ -82,13 +83,18 @@ body{
 .field-row .field{ flex:1; }
 .field-label{ font-size:12.5px; color:var(--text-2); font-weight:500; display:flex; justify-content:space-between; }
 .field-label .unit{ color:var(--text-3); font-weight:400; }
-.field input[type=number]{
+.field input[type=number], .field input[type=text]{
   font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:14px;
   background:var(--surface-2); border:1px solid var(--border); border-radius:9px;
   padding:8px 10px; color:var(--text); width:100%;
 }
-.field input[type=number]:focus{ outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent); }
+.field input[type=text]{ font-family:var(--font-sans); }
+.field input[type=number]:focus, .field input[type=text]:focus{ outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent); }
 .field input[type=number]:disabled{ opacity:.55; cursor:not-allowed; }
+
+.preset-btn.custom{ display:inline-flex; align-items:center; gap:6px; border-style:dashed; }
+.preset-btn .preset-del{ display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%; font-size:12px; line-height:1; opacity:.7; }
+.preset-btn .preset-del:hover{ opacity:1; background:rgba(0,0,0,.15); }
 
 .ch-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
 .ch-table th{ text-align:left; font-weight:600; color:var(--text-3); padding:0 6px 6px; font-size:11px; text-transform:uppercase; letter-spacing:.03em; }
@@ -128,6 +134,8 @@ table.data td{ text-align:right; padding:9px 8px; border-bottom:1px solid var(--
 table.data tr:last-child td{ border-bottom:none; }
 table.data td:first-child{ font-family:var(--font-sans); font-weight:500; }
 table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border-bottom:none; color:var(--text); }
+#presetDefTable{ width:auto; min-width:100%; }
+#presetDefTable th, #presetDefTable td{ white-space:nowrap; }
 
 .formula-chain{ display:flex; flex-direction:column; }
 .formula-step{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; background:var(--surface-2); border-radius:9px; }
@@ -163,6 +171,27 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       <div>
         <div class="panel-title" style="margin-bottom:8px;">장르 프리셋</div>
         <div class="presets" id="presets"></div>
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer; font-size:11.5px; color:var(--text-2); font-weight:600;">프리셋별 가정값 보기</summary>
+          <div style="overflow-x:auto; margin-top:8px;">
+            <table class="data" id="presetDefTable" style="font-size:11px;">
+              <thead><tr><th style="text-align:left">프리셋</th><th>판매가</th><th>목표개수</th><th>확보기간</th><th>집계기간</th><th>첫주전환</th><th>누적전환</th><th>오가닉</th><th>참고CPW</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div class="field-group">
+        <div class="field-group-title">내 프리셋 저장</div>
+        <div class="field-row">
+          <div class="field" style="flex:1;">
+            <span class="field-label">프리셋 이름</span>
+            <input type="text" id="customPresetName" placeholder="예: 우리 게임 v1" maxlength="30">
+          </div>
+        </div>
+        <button type="button" class="preset-btn" id="saveCustomPresetBtn" style="align-self:flex-start;">현재 값을 새 프리셋으로 저장</button>
+        <div class="ch-sum" id="customPresetNote" style="text-align:left;">현재 화면의 모든 입력값(전환 지표·채널 믹스·수수료 설정 포함)을 이름 붙여 이 브라우저에 저장합니다. 위 프리셋 목록에 추가되며, 클릭으로 불러오거나 이름 옆 &times;로 삭제할 수 있습니다. 완전히 처음부터 새로 만들고 싶다면 프리셋을 고르지 않고 아래 항목들을 직접 채운 뒤 저장하면 됩니다.</div>
       </div>
 
       <div class="field-group">
@@ -222,6 +251,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
           <span class="field-label">오가닉 위시리스트 비율 <span class="unit">%</span></span>
           <input type="number" id="organicRatio" step="1" min="0" max="90">
         </div>
+        <div class="ch-sum" style="text-align:left;">오가닉 위시리스트 = 유료 마케팅 없이 쌓이는 위시리스트 비중입니다. 스팀 알고리즘의 자체 추천 노출, 팔로우한 퍼블리셔·시리즈에 대한 신작 알림, 리뷰·언론 보도·유튜브 자연 유입, 입소문(친구 추천) 등이 여기 해당합니다. 신규 IP·무명 개발사는 보통 15~25%, 팬덤이나 전작이 있는 시리즈는 30~50%까지도 흔합니다. 이 비율만큼은 예산에서 필요 위시리스트 수가 줄어듭니다.</div>
       </div>
 
       <div class="field-group">
@@ -364,6 +394,81 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     presetsEl.appendChild(btn);
   });
 
+  var CUSTOM_KEY = 'steam-budget-custom-presets';
+  function loadCustomPresets(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; }catch(e){ return {}; } }
+  function saveCustomPresets(obj){ try{ localStorage.setItem(CUSTOM_KEY, JSON.stringify(obj)); }catch(e){} }
+
+  function renderCustomPresetButtons(){
+    Array.prototype.slice.call(presetsEl.querySelectorAll('.preset-btn.custom')).forEach(function(b){ b.remove(); });
+    var customs = loadCustomPresets();
+    Object.keys(customs).forEach(function(id){
+      var p = customs[id];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'preset-btn custom';
+      btn.dataset.key = 'custom:'+id;
+      var labelSpan = document.createElement('span');
+      labelSpan.textContent = p.label;
+      var delSpan = document.createElement('span');
+      delSpan.className = 'preset-del';
+      delSpan.textContent = '×';
+      delSpan.title = '삭제';
+      btn.appendChild(labelSpan);
+      btn.appendChild(delSpan);
+      delSpan.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!confirm('"'+p.label+'" 프리셋을 삭제할까요?')) return;
+        var cs = loadCustomPresets();
+        delete cs[id];
+        saveCustomPresets(cs);
+        if(activePreset === 'custom:'+id) activePreset = null;
+        renderCustomPresetButtons();
+      });
+      btn.addEventListener('click', function(){ applyPreset('custom:'+id); });
+      presetsEl.appendChild(btn);
+    });
+  }
+  renderCustomPresetButtons();
+
+  function renderPresetDefTable(){
+    var tbody = document.querySelector('#presetDefTable tbody');
+    var rows = Object.keys(PRESETS).map(function(key){ return [PRESETS[key].label, PRESETS[key]]; });
+    tbody.innerHTML = rows.map(function(pair){
+      var p = pair[1];
+      var mixSum = p.mix.reduce(function(a,b){return a+b;},0) || 1;
+      var blended = 0;
+      p.mix.forEach(function(m,i){ blended += (m/mixSum) * p.cpw[i]; });
+      return '<tr><td>'+pair[0]+'</td><td>'+fmtWon(p.price)+'</td><td>'+fmtInt(p.unitsTarget)+'</td><td>'+p.campaignMonths+'개월</td><td>'+p.targetPeriod+'개월</td><td>'+p.launchConv+'%</td><td>'+p.totalConv+'%</td><td>'+p.organicRatio+'%</td><td>'+fmtWon(Math.round(blended))+'</td></tr>';
+    }).join('');
+  }
+  renderPresetDefTable();
+
+  document.getElementById('saveCustomPresetBtn').addEventListener('click', function(){
+    var nameInput = document.getElementById('customPresetName');
+    var name = nameInput.value.trim();
+    var noteEl = document.getElementById('customPresetNote');
+    if(!name){
+      noteEl.classList.add('off');
+      noteEl.textContent = '프리셋 이름을 먼저 입력해주세요.';
+      return;
+    }
+    var s = readState();
+    var id = 'p'+Date.now();
+    var customs = loadCustomPresets();
+    customs[id] = {
+      label:name, price:s.price, fee:s.fee, feeAutoOn:s.feeAutoOn, fxRate:s.fxRate,
+      campaignMonths:s.campaignMonths, targetPeriod:s.targetPeriod,
+      launchConv:s.launchConv, totalConv:s.totalConv, organicRatio:s.organicRatio,
+      unitsTarget:s.unitsTarget, cpw:s.cpw.slice(), mix:s.mix.slice()
+    };
+    saveCustomPresets(customs);
+    renderCustomPresetButtons();
+    nameInput.value = '';
+    noteEl.classList.remove('off');
+    noteEl.textContent = '"'+name+'" 프리셋을 저장했습니다. 위 목록에서 다시 불러올 수 있어요.';
+    applyPreset('custom:'+id);
+  });
+
   var channelBody = document.getElementById('channelBody');
   var chMixInputs = [], chCpwInputs = [];
   CHANNELS.forEach(function(name, i){
@@ -384,12 +489,19 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   var chSumEl = document.getElementById('chSum');
 
   function applyPreset(key){
-    var p = PRESETS[key];
+    var isCustom = key.indexOf('custom:')===0;
+    var p = isCustom ? loadCustomPresets()[key.slice(7)] : PRESETS[key];
+    if(!p) return;
     activePreset = key;
     Array.prototype.forEach.call(presetsEl.children, function(b){ b.classList.toggle('active', b.dataset.key===key); });
     els.price.value=p.price; els.fee.value=p.fee; els.campaignMonths.value=p.campaignMonths; els.targetPeriod.value=p.targetPeriod;
     els.launchConv.value=p.launchConv; els.totalConv.value=p.totalConv; els.organicRatio.value=p.organicRatio;
     els.unitsTarget.value=p.unitsTarget;
+    if(isCustom){
+      if(typeof p.fxRate==='number') els.fxRate.value=p.fxRate;
+      feeAutoEl.checked = !!p.feeAutoOn;
+      syncFeeAutoUI();
+    }
     p.cpw.forEach(function(v,i){ chCpwInputs[i].value=v; });
     p.mix.forEach(function(v,i){ chMixInputs[i].value=v; });
     update();
@@ -620,7 +732,12 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   }
 
   function buildReportHtml(s, c, sim){
-    var genreLabel = (activePreset && PRESETS[activePreset]) ? PRESETS[activePreset].label : '커스텀(직접 입력)';
+    var genreLabel = '커스텀(직접 입력)';
+    if(activePreset && PRESETS[activePreset]) genreLabel = PRESETS[activePreset].label;
+    else if(activePreset && activePreset.indexOf('custom:')===0){
+      var cp = loadCustomPresets()[activePreset.slice(7)];
+      if(cp) genreLabel = cp.label+' (내 프리셋)';
+    }
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
     var now = new Date();
     var dateStr = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
@@ -751,7 +868,8 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       if(typeof s.feeAutoOn==='boolean'){ feeAutoEl.checked=s.feeAutoOn; syncFeeAutoUI(); }
       s.mix.forEach(function(v,i){ if(chMixInputs[i]) chMixInputs[i].value=v; });
       s.cpw.forEach(function(v,i){ if(chCpwInputs[i]) chCpwInputs[i].value=v; });
-      if(saved.preset && PRESETS[saved.preset]){
+      var presetStillExists = saved.preset && (PRESETS[saved.preset] || (saved.preset.indexOf('custom:')===0 && loadCustomPresets()[saved.preset.slice(7)]));
+      if(presetStillExists){
         activePreset = saved.preset;
         Array.prototype.forEach.call(presetsEl.children, function(b){ b.classList.toggle('active', b.dataset.key===saved.preset); });
       }
