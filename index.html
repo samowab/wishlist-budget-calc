@@ -273,6 +273,19 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
         </table>
         <div class="ch-sum" id="chSum"></div>
       </div>
+
+      <div class="field-group">
+        <div class="field-group-title">마일스톤 이벤트 예산 (정액)</div>
+        <table class="ch-table">
+          <thead><tr><th>이벤트</th><th>예산(원)</th></tr></thead>
+          <tbody>
+            <tr><td>CBT 캠페인</td><td><input type="number" id="milestoneCBT" step="1000000" min="0" value="0"></td></tr>
+            <tr><td>SGF 참가</td><td><input type="number" id="milestoneSGF" step="1000000" min="0" value="0"></td></tr>
+            <tr><td>기타 마일스톤</td><td><input type="number" id="milestoneOther" step="1000000" min="0" value="0"></td></tr>
+          </tbody>
+        </table>
+        <div class="ch-sum" style="text-align:left;">CBT·SGF 참가 등은 위시리스트 수에 비례해 커지는 CPW 채널이 아니라, 참가 여부에 따라 통째로 들어가는 정액 비용이라 별도로 더합니다. 참고(크로노 오디세이 2025 CBT 실집행 기준): SGF 참가비 약 5.6억원, CBT 캠페인(중·일·한 3개 지역 합산) 약 2.3억원 이상 — 자사 실적이니 프로젝트 성격에 맞게 조정하세요. 같은 캠페인에서 실측된 "CBT 사인업" 단가는 SGF 피처링 경유 20,901원, 일반 유료광고 경유 9,500원이었는데, 사인업은 위시리스트보다 허들이 높은 행동이라 위시리스트 CPW의 정확한 값이 아니라 <b style="color:var(--text)">보수적 상한 참고치</b> 정도로만 감안하세요.</div>
+      </div>
     </div>
 
     <div class="output">
@@ -303,7 +316,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
           <div class="pill" id="kpiMultiplePill">-</div>
         </div>
       </div>
-      <div class="budget-scope-note">※ "필요 마케팅 예산"은 위시리스트 유료 획득 비용(CPW 기준) 한정치입니다. 트레일러·키아트 제작비, 로컬라이제이션, PR 에이전시, 인건비 등은 포함되지 않습니다.</div>
+      <div class="budget-scope-note">※ "필요 마케팅 예산"은 위시리스트 유료 획득 비용(CPW)과 CBT·SGF 등 마일스톤 이벤트 정액 비용의 합입니다. 트레일러·키아트 제작비, 로컬라이제이션, 인건비 등 그 외 항목은 포함되지 않습니다.</div>
 
       <div class="card">
         <div class="card-head">
@@ -339,7 +352,11 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
         <table class="data" id="channelTable">
           <thead><tr><th style="text-align:left">채널</th><th>비율</th><th>CPW</th><th>배분 예산</th><th>예상 위시리스트</th></tr></thead>
           <tbody></tbody>
-          <tfoot><tr><td>합계</td><td></td><td></td><td id="chTotalBudget"></td><td id="chTotalWishlists"></td></tr></tfoot>
+          <tfoot>
+            <tr><td>CPW 채널 합계</td><td></td><td></td><td id="chTotalBudget"></td><td id="chTotalWishlists"></td></tr>
+            <tr><td>+ 마일스톤 이벤트 (CBT+SGF+기타)</td><td></td><td></td><td id="milestoneTotalRow"></td><td></td></tr>
+            <tr><td><b>총 필요 마케팅 예산</b></td><td></td><td></td><td id="grandTotalRow"></td><td></td></tr>
+          </tfoot>
         </table>
       </div>
 
@@ -372,7 +389,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
   };
 
   var els = {};
-  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate','existingWishlists','directSaleRatio'].forEach(function(id){ els[id] = document.getElementById(id); });
+  ['unitsTarget','price','fee','campaignMonths','targetPeriod','launchConv','totalConv','organicRatio','fxRate','existingWishlists','directSaleRatio','milestoneCBT','milestoneSGF','milestoneOther'].forEach(function(id){ els[id] = document.getElementById(id); });
   var feeAutoEl = document.getElementById('feeAuto');
   var fxRowEl = document.getElementById('fxRow');
   var feeAutoNoteEl = document.getElementById('feeAutoNote');
@@ -476,7 +493,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       label:name, price:s.price, fee:s.fee, feeAutoOn:s.feeAutoOn, fxRate:s.fxRate,
       campaignMonths:s.campaignMonths, targetPeriod:s.targetPeriod,
       launchConv:s.launchConv, totalConv:s.totalConv, organicRatio:s.organicRatio,
-      unitsTarget:s.unitsTarget, existingWishlists:s.existingWishlists, directSaleRatio:s.directSaleRatio, cpw:s.cpw.slice(), mix:s.mix.slice()
+      unitsTarget:s.unitsTarget, existingWishlists:s.existingWishlists, directSaleRatio:s.directSaleRatio,
+      milestoneCBT:s.milestoneCBT, milestoneSGF:s.milestoneSGF, milestoneOther:s.milestoneOther,
+      cpw:s.cpw.slice(), mix:s.mix.slice()
     };
     saveCustomPresets(customs);
     renderCustomPresetButtons();
@@ -516,6 +535,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     els.directSaleRatio.value = p.directSaleRatio||0;
     els.unitsTarget.value=p.unitsTarget;
     els.existingWishlists.value = isCustom ? (p.existingWishlists||0) : 0;
+    els.milestoneCBT.value = isCustom ? (p.milestoneCBT||0) : 0;
+    els.milestoneSGF.value = isCustom ? (p.milestoneSGF||0) : 0;
+    els.milestoneOther.value = isCustom ? (p.milestoneOther||0) : 0;
     if(isCustom){
       if(typeof p.fxRate==='number') els.fxRate.value=p.fxRate;
       feeAutoEl.checked = !!p.feeAutoOn;
@@ -552,6 +574,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       organicRatio: Math.min(95, Math.max(0, parseFloat(els.organicRatio.value)||0)),
       existingWishlists: Math.max(0, parseFloat(els.existingWishlists.value)||0),
       directSaleRatio: Math.min(90, Math.max(0, parseFloat(els.directSaleRatio.value)||0)),
+      milestoneCBT: Math.max(0, parseFloat(els.milestoneCBT.value)||0),
+      milestoneSGF: Math.max(0, parseFloat(els.milestoneSGF.value)||0),
+      milestoneOther: Math.max(0, parseFloat(els.milestoneOther.value)||0),
       mix: mix, cpw: cpw
     };
   }
@@ -570,13 +595,15 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
     var blendedCPW = 0;
     s.mix.forEach(function(m,i){ blendedCPW += (m/mixSum) * s.cpw[i]; });
-    var budget = paidWishlists * blendedCPW;
+    var cpwBudget = paidWishlists * blendedCPW;
+    var milestoneBudget = s.milestoneCBT + s.milestoneSGF + s.milestoneOther;
+    var budget = cpwBudget + milestoneBudget;
     var revenuePerWishlist = netPrice * totalConvFrac;
     var multiple = blendedCPW>0 ? revenuePerWishlist/blendedCPW : 0;
     var netTargetRevenue = netPrice * unitsNeeded;
     var budgetRatioNet = netTargetRevenue>0 ? (budget/netTargetRevenue)*100 : 0;
     var budgetRatioGross = s.targetRevenue>0 ? (budget/s.targetRevenue)*100 : 0;
-    return { netPrice:netPrice, unitsNeeded:unitsNeeded, unitsDirect:unitsDirect, unitsViaWishlist:unitsViaWishlist, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple, netTargetRevenue:netTargetRevenue, budgetRatioNet:budgetRatioNet, budgetRatioGross:budgetRatioGross };
+    return { netPrice:netPrice, unitsNeeded:unitsNeeded, unitsDirect:unitsDirect, unitsViaWishlist:unitsViaWishlist, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, cpwBudget:cpwBudget, milestoneBudget:milestoneBudget, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple, netTargetRevenue:netTargetRevenue, budgetRatioNet:budgetRatioNet, budgetRatioGross:budgetRatioGross };
   }
 
   function simulate(s, c){
@@ -689,7 +716,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     html += '<div class="formula-arrow">&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</div>';
     html += '<div class="formula-step"><span class="fs-label">필요 위시리스트 수 (유상)</span><span class="fs-value">'+fmtInt(c.paidWishlists)+'건</span></div>';
     html += '<div class="formula-arrow">&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+' <span style="color:var(--text-3)">(채널 믹스 '+mixSum.toFixed(0)+'% 가중평균)</span></div>';
-    html += '<div class="formula-step result"><span class="fs-label">필요 마케팅 예산</span><span class="fs-value">'+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</span></div>';
+    html += '<div class="formula-step"><span class="fs-label">위시리스트 획득 예산 (CPW 기준)</span><span class="fs-value">'+fmtEok(c.cpwBudget)+'</span></div>';
+    html += '<div class="formula-arrow">+ 마일스톤 이벤트 비용 '+fmtEok(c.milestoneBudget)+' <span style="color:var(--text-3)">(CBT+SGF+기타 정액)</span></div>';
+    html += '<div class="formula-step result"><span class="fs-label">필요 마케팅 예산 (총계)</span><span class="fs-value">'+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</span></div>';
     el.innerHTML = html;
   }
 
@@ -733,7 +762,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     chSumEl.classList.toggle('off', Math.abs(mixSum-100)>0.5);
 
     document.getElementById('kpiBudget').textContent = fmtEok(c.budget);
-    document.getElementById('kpiBudgetSub').textContent = fmtWon(c.budget);
+    document.getElementById('kpiBudgetSub').textContent = 'CPW '+fmtEok(c.cpwBudget)+' + 마일스톤 '+fmtEok(c.milestoneBudget);
     document.getElementById('kpiBudgetRatio').textContent = (isFinite(c.budgetRatioNet)? c.budgetRatioNet.toFixed(1):'-')+'%';
     var ratioPillObj = budgetRatioPill(c.budgetRatioNet);
     var ratioPillEl = document.getElementById('kpiBudgetRatioPill');
@@ -761,6 +790,8 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     });
     document.getElementById('chTotalBudget').textContent = fmtEok(totalBudget);
     document.getElementById('chTotalWishlists').textContent = fmtInt(totalWishlists)+'건';
+    document.getElementById('milestoneTotalRow').textContent = fmtEok(c.milestoneBudget);
+    document.getElementById('grandTotalRow').textContent = fmtEok(c.budget);
 
     var sim = simulate(s, c);
     renderChart(sim);
@@ -847,6 +878,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<tr><td>누적 총 전환율</td><td>'+s.totalConv.toFixed(1)+'%</td></tr>'+
       '<tr><td>오가닉 위시리스트 비율</td><td>'+s.organicRatio.toFixed(0)+'%</td></tr>'+
       '<tr><td>현재 보유 위시리스트 수</td><td>'+fmtInt(s.existingWishlists)+'건</td></tr>'+
+      '<tr><td>마일스톤 이벤트 예산 (CBT/SGF/기타)</td><td>'+fmtEok(s.milestoneCBT)+' + '+fmtEok(s.milestoneSGF)+' + '+fmtEok(s.milestoneOther)+' = '+fmtEok(c.milestoneBudget)+'</td></tr>'+
       '</table>'+
 
       '<h2>2. 예산 계산 과정</h2>'+
@@ -856,23 +888,28 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '<tr><td>&divide; 누적 총 전환율 '+s.totalConv.toFixed(1)+'%</td><td>필요 위시리스트 수(전체) '+fmtInt(c.totalWishlists)+'건</td></tr>'+
       '<tr><td>&minus; 현재 보유 위시리스트 '+fmtInt(c.existingWishlists)+'건</td><td>남은 목표 위시리스트 '+fmtInt(c.remainingWishlists)+'건</td></tr>'+
       '<tr><td>&times; (1 &minus; 오가닉 비율 '+s.organicRatio.toFixed(0)+'%)</td><td>필요 위시리스트 수(유상) '+fmtInt(c.paidWishlists)+'건</td></tr>'+
-      '<tr><td>&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+'</td><td class="big">필요 마케팅 예산 '+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</td></tr>'+
+      '<tr><td>&times; 블렌디드 CPW '+fmtWon(c.blendedCPW)+'</td><td>위시리스트 획득 예산(CPW) '+fmtEok(c.cpwBudget)+'</td></tr>'+
+      '<tr><td>+ 마일스톤 이벤트 비용</td><td class="big">필요 마케팅 예산(총계) '+fmtEok(c.budget)+' ('+fmtWon(c.budget)+')</td></tr>'+
       '</table>'+
 
       '<h2>3. 핵심 지표 요약</h2>'+
       '<table><tr><th>지표</th><th>값</th></tr>'+
-      '<tr><td>필요 마케팅 예산 (위시리스트 획득비 한정)</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
+      '<tr><td>필요 마케팅 예산 (총계 = CPW 획득비 + 마일스톤)</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
+      '<tr><td>· 위시리스트 획득비(CPW)</td><td>'+fmtEok(c.cpwBudget)+'</td></tr>'+
+      '<tr><td>· 마일스톤 이벤트(CBT/SGF/기타)</td><td>'+fmtEok(c.milestoneBudget)+'</td></tr>'+
       '<tr><td>마케팅비 / 순매출</td><td>'+c.budgetRatioNet.toFixed(1)+'% ('+budgetRatioPill(c.budgetRatioNet).text+')</td></tr>'+
       '<tr><td>필요 위시리스트(유상)</td><td>'+fmtInt(c.paidWishlists)+'건 (전체 목표 '+fmtInt(c.totalWishlists)+'건 &minus; 보유 '+fmtInt(c.existingWishlists)+'건 &minus; 오가닉 '+fmtInt(c.organicWishlists)+'건)</td></tr>'+
       '<tr><td>목표 블렌디드 CPW</td><td>'+fmtWon(c.blendedCPW)+'</td></tr>'+
       '<tr><td>매출 배수</td><td>'+c.multiple.toFixed(2)+'x ('+pill.text+')</td></tr>'+
       '</table>'+
-      '<p class="note" style="margin-top:6px;">※ 필요 마케팅 예산은 위시리스트 유료 획득 비용(CPW 기준)만 포함하며, 트레일러·키아트 제작, 로컬라이제이션, PR 에이전시, 인건비 등은 포함하지 않습니다.</p>'+
+      '<p class="note" style="margin-top:6px;">※ 필요 마케팅 예산은 위시리스트 유료 획득 비용(CPW)과 CBT&middot;SGF 등 마일스톤 이벤트 정액 비용의 합이며, 트레일러·키아트 제작, 로컬라이제이션, 인건비 등은 포함하지 않습니다.</p>'+
 
       '<h2>4. 채널별 예산 배분</h2>'+
       '<table><tr><th>채널</th><th>비율</th><th>CPW</th><th>배분 예산</th><th>예상 위시리스트</th></tr>'+
       channelRows+
-      '<tr><td><b>합계</b></td><td></td><td></td><td><b>'+fmtEok(totalBudget)+'</b></td><td><b>'+fmtInt(totalWishlists)+'건</b></td></tr>'+
+      '<tr><td><b>CPW 채널 합계</b></td><td></td><td></td><td><b>'+fmtEok(totalBudget)+'</b></td><td><b>'+fmtInt(totalWishlists)+'건</b></td></tr>'+
+      '<tr><td>+ 마일스톤 이벤트(CBT/SGF/기타)</td><td></td><td></td><td>'+fmtEok(c.milestoneBudget)+'</td><td></td></tr>'+
+      '<tr><td><b>총 필요 마케팅 예산</b></td><td></td><td></td><td><b>'+fmtEok(c.budget)+'</b></td><td></td></tr>'+
       '</table>'+
 
       '<h2>5. 구간별 누적 매출 vs 누적 지출</h2>'+
@@ -921,6 +958,9 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       els.unitsTarget.value=s.unitsTarget;
       if(typeof s.directSaleRatio==='number') els.directSaleRatio.value=s.directSaleRatio;
       if(typeof s.existingWishlists==='number') els.existingWishlists.value=s.existingWishlists;
+      if(typeof s.milestoneCBT==='number') els.milestoneCBT.value=s.milestoneCBT;
+      if(typeof s.milestoneSGF==='number') els.milestoneSGF.value=s.milestoneSGF;
+      if(typeof s.milestoneOther==='number') els.milestoneOther.value=s.milestoneOther;
       if(typeof s.fxRate==='number') els.fxRate.value=s.fxRate;
       if(typeof s.feeAutoOn==='boolean'){ feeAutoEl.checked=s.feeAutoOn; syncFeeAutoUI(); }
       s.mix.forEach(function(v,i){ if(chMixInputs[i]) chMixInputs[i].value=v; });
