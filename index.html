@@ -106,8 +106,9 @@ body{
 
 .output{ display:flex; flex-direction:column; gap:20px; }
 
-.kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
 @media (max-width:760px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+.budget-scope-note{ font-size:11.5px; color:var(--text-3); line-height:1.6; margin-top:-8px; }
 .kpi-tile{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; display:flex; flex-direction:column; gap:6px; }
 .kpi-tile.hero{ background:linear-gradient(160deg,var(--accent-soft),var(--surface) 65%); border-color:var(--accent); }
 .kpi-label{ font-size:12px; color:var(--text-2); font-weight:600; }
@@ -282,6 +283,11 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
           <div class="kpi-sub" id="kpiBudgetSub">-</div>
         </div>
         <div class="kpi-tile">
+          <div class="kpi-label">마케팅비 / 순매출</div>
+          <div class="kpi-value" id="kpiBudgetRatio">-</div>
+          <div class="pill" id="kpiBudgetRatioPill">-</div>
+        </div>
+        <div class="kpi-tile">
           <div class="kpi-label">필요 위시리스트 (유상)</div>
           <div class="kpi-value" id="kpiWishlists">-</div>
           <div class="kpi-sub" id="kpiWishlistsSub">-</div>
@@ -297,6 +303,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
           <div class="pill" id="kpiMultiplePill">-</div>
         </div>
       </div>
+      <div class="budget-scope-note">※ "필요 마케팅 예산"은 위시리스트 유료 획득 비용(CPW 기준) 한정치입니다. 트레일러·키아트 제작비, 로컬라이제이션, PR 에이전시, 인건비 등은 포함되지 않습니다.</div>
 
       <div class="card">
         <div class="card-head">
@@ -345,7 +352,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       </div>
 
       <div class="footnote">
-        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 목표 판매 개수에서 비위시리스트 직접구매 비율만큼 뺀 "위시리스트 경유 판매 목표"를 누적 총 전환율로 나누면 필요 위시리스트 수가 나옵니다. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 손익분기 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달입니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
+        계산 방식: 목표 매출 = 판매가 &times; 목표 판매 개수(스팀 수수료 반영 전 총액). 목표 판매 개수에서 비위시리스트 직접구매 비율만큼 뺀 "위시리스트 경유 판매 목표"를 누적 총 전환율로 나누면 필요 위시리스트 수가 나옵니다. 매출 시뮬레이션에서 실제 수취 매출은 판매가 &times; (1 &minus; 스팀 수수료)로 계산합니다. "매출 구간별 자동 계산"을 켜면 스팀의 실제 수익 배분 정책(게임당 누적 매출 $1,000만까지 30%, $1,000만~$5,000만 구간 25%, $5,000만 초과 구간 20%)을 목표 매출에 적용해 가중평균 유효 수수료를 자동 산출합니다. 원화 목표 매출을 달러 구간과 비교하기 위한 환율은 참고용 추정치이며 직접 조정할 수 있습니다. 이 중 현재 보유 위시리스트 수를 먼저 차감하고, 남은 목표에서 오가닉 비율을 제외한 유상 위시리스트 수에 채널 블렌디드 CPW를 곱해 필요 예산을 역산합니다. 시뮬레이션은 캠페인 기간 동안 위시리스트·지출이 선형으로 쌓이고, 출시 시점에 누적 위시리스트 &times; 첫 주 전환율만큼 즉시 판매되며, 남은 위시리스트 풀이 매출 집계 기간에 걸쳐 (누적 총 전환율 &minus; 첫 주 전환율)만큼 지수적으로 추가 전환된다고 가정합니다. 마케팅비 회수 시점은 이 누적 매출이 캠페인 총 지출(출시 후 고정)을 넘어서는 달이며, 개발비·인건비 등을 포함한 프로젝트 전체 손익분기와는 다른 개념입니다. "마케팅비 / 순매출" 비율은 필요 예산을 목표 매출(스팀 수수료 차감 후 기준)로 나눈 값으로, 이 예산이 매출 대비 과도한지 판단하는 참고 지표이며 30% 이하를 통상적인 적정 범위로 표시했습니다(장르·단계에 따라 달라질 수 있는 경험칙입니다). "필요 마케팅 예산"은 위시리스트 유료 획득 비용(CPW 기준)만 포함하며, 트레일러·키아트 제작, 로컬라이제이션, PR 에이전시, 인건비 등 그 외 마케팅·제작 비용은 포함하지 않습니다. 실제로는 스팀 알고리즘 노출, 세일·할인, 리뷰 점수, 장르별 시즌성에 따라 전환율이 크게 달라질 수 있는 추정 모델입니다.
       </div>
     </div>
   </div>
@@ -566,7 +573,10 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var budget = paidWishlists * blendedCPW;
     var revenuePerWishlist = netPrice * totalConvFrac;
     var multiple = blendedCPW>0 ? revenuePerWishlist/blendedCPW : 0;
-    return { netPrice:netPrice, unitsNeeded:unitsNeeded, unitsDirect:unitsDirect, unitsViaWishlist:unitsViaWishlist, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple };
+    var netTargetRevenue = netPrice * unitsNeeded;
+    var budgetRatioNet = netTargetRevenue>0 ? (budget/netTargetRevenue)*100 : 0;
+    var budgetRatioGross = s.targetRevenue>0 ? (budget/s.targetRevenue)*100 : 0;
+    return { netPrice:netPrice, unitsNeeded:unitsNeeded, unitsDirect:unitsDirect, unitsViaWishlist:unitsViaWishlist, totalWishlists:totalWishlists, existingWishlists:existingWishlists, remainingWishlists:remainingWishlists, organicWishlists:organicWishlists, paidWishlists:paidWishlists, mixSum:mixSum, blendedCPW:blendedCPW, budget:budget, revenuePerWishlist:revenuePerWishlist, multiple:multiple, netTargetRevenue:netTargetRevenue, budgetRatioNet:budgetRatioNet, budgetRatioGross:budgetRatioGross };
   }
 
   function simulate(s, c){
@@ -659,6 +669,12 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     return {cls:'bad', text:'위험 (<2.0x)'};
   }
 
+  function budgetRatioPill(r){
+    if(r<=30) return {cls:'good', text:'적정 범위 (≤30%)'};
+    if(r<=50) return {cls:'warn', text:'높음 (30~50%, 재검토 권장)'};
+    return {cls:'bad', text:'과도 (>50%, 재검토 필요)'};
+  }
+
   function renderFormula(s, c){
     var el = document.getElementById('formulaChain');
     var mixSum = s.mix.reduce(function(a,b){return a+b;},0) || 1;
@@ -718,6 +734,10 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
 
     document.getElementById('kpiBudget').textContent = fmtEok(c.budget);
     document.getElementById('kpiBudgetSub').textContent = fmtWon(c.budget);
+    document.getElementById('kpiBudgetRatio').textContent = (isFinite(c.budgetRatioNet)? c.budgetRatioNet.toFixed(1):'-')+'%';
+    var ratioPillObj = budgetRatioPill(c.budgetRatioNet);
+    var ratioPillEl = document.getElementById('kpiBudgetRatioPill');
+    ratioPillEl.textContent = ratioPillObj.text; ratioPillEl.className = 'pill '+ratioPillObj.cls;
     document.getElementById('kpiWishlists').textContent = fmtInt(c.paidWishlists)+'건';
     document.getElementById('kpiWishlistsSub').textContent = '전체 목표 '+fmtInt(c.totalWishlists)+'건 · 보유 '+fmtInt(c.existingWishlists)+'건 · 오가닉 '+fmtInt(c.organicWishlists)+'건 제외';
     document.getElementById('kpiCpw').textContent = fmtWon(c.blendedCPW);
@@ -745,7 +765,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
     var sim = simulate(s, c);
     renderChart(sim);
     var bepNote = document.getElementById('bepNote');
-    bepNote.textContent = sim.bepMonth!==null ? ('손익분기 도달: 출시 후 약 '+sim.bepMonth+'개월차') : ('집계 기간 '+s.targetPeriod+'개월 내 미도달');
+    bepNote.textContent = sim.bepMonth!==null ? ('마케팅비 회수 시점: 출시 후 약 '+sim.bepMonth+'개월차') : ('마케팅비 미회수 (집계 기간 '+s.targetPeriod+'개월 내)');
     document.getElementById('launchNote').innerHTML =
       '출시 시점 누적 위시리스트 <b>'+fmtInt(sim.launchPool)+'건</b> &rarr; 출시 첫 주 판매 <b>'+fmtInt(sim.unitsLaunch)+'카피</b>, 이후 '+s.targetPeriod+'개월간 추가 <b>'+fmtInt(sim.unitsTailTotal)+'카피</b> 전환';
 
@@ -841,11 +861,13 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
 
       '<h2>3. 핵심 지표 요약</h2>'+
       '<table><tr><th>지표</th><th>값</th></tr>'+
-      '<tr><td>필요 마케팅 예산</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
+      '<tr><td>필요 마케팅 예산 (위시리스트 획득비 한정)</td><td class="big">'+fmtEok(c.budget)+'</td></tr>'+
+      '<tr><td>마케팅비 / 순매출</td><td>'+c.budgetRatioNet.toFixed(1)+'% ('+budgetRatioPill(c.budgetRatioNet).text+')</td></tr>'+
       '<tr><td>필요 위시리스트(유상)</td><td>'+fmtInt(c.paidWishlists)+'건 (전체 목표 '+fmtInt(c.totalWishlists)+'건 &minus; 보유 '+fmtInt(c.existingWishlists)+'건 &minus; 오가닉 '+fmtInt(c.organicWishlists)+'건)</td></tr>'+
       '<tr><td>목표 블렌디드 CPW</td><td>'+fmtWon(c.blendedCPW)+'</td></tr>'+
       '<tr><td>매출 배수</td><td>'+c.multiple.toFixed(2)+'x ('+pill.text+')</td></tr>'+
       '</table>'+
+      '<p class="note" style="margin-top:6px;">※ 필요 마케팅 예산은 위시리스트 유료 획득 비용(CPW 기준)만 포함하며, 트레일러·키아트 제작, 로컬라이제이션, PR 에이전시, 인건비 등은 포함하지 않습니다.</p>'+
 
       '<h2>4. 채널별 예산 배분</h2>'+
       '<table><tr><th>채널</th><th>비율</th><th>CPW</th><th>배분 예산</th><th>예상 위시리스트</th></tr>'+
@@ -854,7 +876,7 @@ table.data tfoot td{ font-weight:700; border-top:1px solid var(--border); border
       '</table>'+
 
       '<h2>5. 구간별 누적 매출 vs 누적 지출</h2>'+
-      '<p class="note" style="margin-top:0;">출시 시점 누적 위시리스트 '+fmtInt(sim.launchPool)+'건 &rarr; 출시 첫 주 판매 '+fmtInt(sim.unitsLaunch)+'카피, 이후 '+s.targetPeriod+'개월간 추가 '+fmtInt(sim.unitsTailTotal)+'카피 전환. 손익분기 시점: '+(sim.bepMonth!==null ? ('출시 후 약 '+sim.bepMonth+'개월차') : ('집계 기간 '+s.targetPeriod+'개월 내 미도달'))+'</p>'+
+      '<p class="note" style="margin-top:0;">출시 시점 누적 위시리스트 '+fmtInt(sim.launchPool)+'건 &rarr; 출시 첫 주 판매 '+fmtInt(sim.unitsLaunch)+'카피, 이후 '+s.targetPeriod+'개월간 추가 '+fmtInt(sim.unitsTailTotal)+'카피 전환. 마케팅비 회수 시점: '+(sim.bepMonth!==null ? ('출시 후 약 '+sim.bepMonth+'개월차') : ('마케팅비 미회수, 집계 기간 '+s.targetPeriod+'개월 내'))+'</p>'+
       '<table><tr><th>구간</th><th>누적 매출</th><th>누적 지출</th></tr>'+
       timelineRows+
       '</table>'+
